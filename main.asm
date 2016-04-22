@@ -41,7 +41,7 @@ init
 	
 	bset	#6,($60000C)		;enable direct sound
 
-	move.w	#$0,($600018)		;prepare keyhandler (check all keys)
+	;move.w	#$0,($600018)		;prepare keyhandler (check all keys)
 	
 	move.l	#$60000E,a2
 	
@@ -71,6 +71,8 @@ init
 	
 	lea	int4(PC),a1		;set AutoInt 4 vector
 	move.l	a1,($000070)
+	
+	bset	#2,($600001)		;re-enable memory protection
 
 	moveq	#$0,d0
 	lea	musicdata(PC),a0	;initialize pointers
@@ -144,26 +146,26 @@ core0					;volume 0 - 20t
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
-	beq	\resetsmp1		;8/10
+	beq.s	\resetsmp1		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 
 \nx1
 	nop				;4	
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -179,16 +181,16 @@ core0					;volume 0 - 20t
 					
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core1					;volume 1 - 20+16t
@@ -228,26 +230,26 @@ core1					;volume 1 - 20+16t
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
-	beq	\resetsmp1		;8/10
+	beq.s	\resetsmp1		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -261,16 +263,16 @@ core1					;volume 1 - 20+16t
 	
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core2					;volume 2 - 20+32t
@@ -310,26 +312,26 @@ core2					;volume 2 - 20+32t
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
-	beq	\resetsmp1		;8/10
+	beq.s	\resetsmp1		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -343,16 +345,16 @@ core2					;volume 2 - 20+32t
 	
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core3					;volume 3 - 20+48t
@@ -392,26 +394,26 @@ core3					;volume 3 - 20+48t
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
-	beq	\resetsmp1		;8/10
+	beq.s	\resetsmp1		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -425,16 +427,16 @@ core3					;volume 3 - 20+48t
 	
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core4					;volume 4 - 20+64t
@@ -474,26 +476,26 @@ core4					;volume 4 - 20+64t
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
-	beq	\resetsmp1		;8/10
+	beq.s	\resetsmp1		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -507,16 +509,16 @@ core4					;volume 4 - 20+64t
 	
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core5					;volume 5 - 20+80t
@@ -556,26 +558,26 @@ core5					;volume 5 - 20+80t
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
-	beq	\resetsmp1		;8/10
+	beq.s	\resetsmp1		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -589,16 +591,16 @@ core5					;volume 5 - 20+80t
 
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core6					;volume 6 - 20+96t
@@ -638,26 +640,26 @@ core6					;volume 6 - 20+96t
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
-	beq	\resetsmp1		;8/10
+	beq.s	\resetsmp1		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -671,16 +673,16 @@ core6					;volume 6 - 20+96t
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core7					;volume 7 - 20+112t
@@ -720,26 +722,26 @@ core7					;volume 7 - 20+112t
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
-	beq	\resetsmp1		;8/10
+	beq.s	\resetsmp1		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -753,16 +755,16 @@ core7					;volume 7 - 20+112t
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core8					;volume 8 - 20+128t
@@ -802,26 +804,26 @@ core8					;volume 8 - 20+128t
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
-	beq	\resetsmp1		;8/10
+	beq.s	\resetsmp1		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -835,16 +837,16 @@ core8					;volume 8 - 20+128t
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core9					;volume 9 - 20+144t
@@ -891,19 +893,19 @@ core9					;volume 9 - 20+144t
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -917,16 +919,16 @@ core9					;volume 9 - 20+144t
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core10					;volume 10 - 20+160t
@@ -971,19 +973,19 @@ core10					;volume 10 - 20+160t
 	or.l	d0,d0			;8	timing
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -998,16 +1000,16 @@ core10					;volume 10 - 20+160t
 \resetsmp1
 	move.b	#$0,($60000E)
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core11					;volume 11 - 20+176t
@@ -1060,19 +1062,19 @@ core11					;volume 11 - 20+176t
 ; 	nop				;4
 \nx1
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -1088,16 +1090,16 @@ core11					;volume 11 - 20+176t
 	nop
 	move.b	#$0,($60000E)		;20__198
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core12					;volume 12 - 20+192t
@@ -1147,19 +1149,19 @@ core12					;volume 12 - 20+192t
 	or.l	d0,d0			;8	timing
 \nx1
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -1175,16 +1177,16 @@ core12					;volume 12 - 20+192t
 	nop
 	move.l	1(a2),a2		;16
 	move.b	#$0,($60000E)		;20__214
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core13					;volume 13 - 20+208t
@@ -1228,7 +1230,7 @@ core13					;volume 13 - 20+208t
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.b	#$0,($60000E)		;20__228
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
@@ -1236,13 +1238,13 @@ core13					;volume 13 - 20+208t
 	or.l	d0,d0			;8	timing
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -1256,17 +1258,17 @@ core13					;volume 13 - 20+208t
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.b	#$0,($60000E)
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core14					;volume 14 - 20+224t
@@ -1310,7 +1312,7 @@ core14					;volume 14 - 20+224t
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	or.l	d0,d0			;8	timing
 	move.b	#$0,($60000E)		;20__244
 	ori.b	#0,ccr			;20	timing
@@ -1323,13 +1325,13 @@ core14					;volume 14 - 20+224t
 ; 	nop				;4
 \nx2	
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -1343,18 +1345,18 @@ core14					;volume 14 - 20+224t
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	nop
 	move.b	#$0,($60000E)		;20__242
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core15					;volume 15 - 20+240t
@@ -1398,7 +1400,7 @@ core15					;volume 15 - 20+240t
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	ori.b	#0,ccr			;20	timing
 	nop				;4
 ; 	nop
@@ -1411,13 +1413,13 @@ core15					;volume 15 - 20+240t
 	or.l	d0,d0			;8	timing
 \nx2	
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -1431,18 +1433,18 @@ core15					;volume 15 - 20+240t
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	nop
 	move.l	1(a3),a3
 	move.b	#$0,($60000E)		;20__258
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core16					;volume 16 - 20+256t
@@ -1484,13 +1486,13 @@ core16					;volume 16 - 20+256t
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.b	#$0,($60000E)		;20__276	
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
@@ -1498,7 +1500,7 @@ core16					;volume 16 - 20+256t
 	or.l	d0,d0			;8	timing
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -1512,17 +1514,17 @@ core16					;volume 16 - 20+256t
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.b	#$0,($60000E)
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core17					;volume 17 - 20+272t
@@ -1566,13 +1568,13 @@ core17					;volume 17 - 20+272t
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	or.l	d0,d0			;8	timing
 	move.b	#$0,($60000E)		;20__292
 	ori.b	#0,ccr			;20	timing
@@ -1585,7 +1587,7 @@ core17					;volume 17 - 20+272t
 ; 	nop				;4
 \nx3
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -1599,18 +1601,18 @@ core17					;volume 17 - 20+272t
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	nop
 	move.b	#$0,($60000E)		;20__290
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core18					;volume 18 - 20+288t
@@ -1654,13 +1656,13 @@ core18					;volume 18 - 20+288t
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	ori.b	#0,ccr			;20	timing
 	nop				;4
 ; 	nop
@@ -1673,7 +1675,7 @@ core18					;volume 18 - 20+288t
 	or.l	d0,d0			;8	timing
 \nx3
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx4	
@@ -1687,18 +1689,18 @@ core18					;volume 18 - 20+288t
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	nop
 	move.l	1(a4),a4
 	move.b	#$0,($60000E)		;20__306
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core19					;volume 19 - 20+304t
@@ -1740,19 +1742,19 @@ core19					;volume 19 - 20+304t
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3
 	nop				;4
 	cmp.b	(a5),d0			;8
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.b	#$0,($60000E)		;20__324
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
@@ -1768,17 +1770,17 @@ core19					;volume 19 - 20+304t
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.b	#$0,($60000E)
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core20					;volume 20 - 20+320t
@@ -1822,19 +1824,19 @@ core20					;volume 20 - 20+320t
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3
 	nop				;4
 	cmp.b	(a5),d0			;8	
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	or.l	d0,d0			;8	timing
 	move.b	#$0,($60000E)		;20__340
 	
@@ -1855,18 +1857,18 @@ core20					;volume 20 - 20+320t
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	moveq	#0,d0
 	move.b	#$0,($60000E)		;20__338
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core21					;volume 21 - 20+336t
@@ -1910,19 +1912,19 @@ core21					;volume 21 - 20+336t
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3
 	nop				;4
 	cmp.b	(a5),d0			;8	
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	ori.b	#0,ccr			;20	timing
 	nop				;4
 ; 	nop
@@ -1944,18 +1946,18 @@ core21					;volume 21 - 20+336t
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	moveq	#0,d0
 	move.l	1(a5),a5
 	move.b	#$0,($60000E)		;20__354
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core22					;volume 21 - 20+352t
@@ -1999,19 +2001,19 @@ core22					;volume 21 - 20+352t
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3
 	nop				;4
 	cmp.b	(a5),d0			;8	
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8	
 \nx4
@@ -2026,16 +2028,16 @@ core22					;volume 21 - 20+352t
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core23					;volume 23 - 20+8+368t
@@ -2079,19 +2081,19 @@ core23					;volume 23 - 20+8+368t
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3
 	nop				;4
 	cmp.b	(a5),d0			;8	
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8	
 \nx4
@@ -2106,16 +2108,16 @@ core23					;volume 23 - 20+8+368t
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 core24					;volume 24 - full loop
@@ -2159,19 +2161,19 @@ core24					;volume 24 - full loop
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
-	beq	\resetsmp2		;8/10
+	beq.s	\resetsmp2		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
-	beq	\resetsmp3		;8/10
+	beq.s	\resetsmp3		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8
 \nx3
 	nop				;4
 	cmp.b	(a5),d0			;8	
-	beq	\resetsmp4		;8/10
+	beq.s	\resetsmp4		;8/10
 	move.l	(a7),-(a7)		;20
 	addq.l	#4,a7			;8	
 \nx4
@@ -2192,16 +2194,16 @@ core24					;volume 24 - full loop
 				
 \resetsmp1
 	move.l	1(a2),a2		;16
-	bra	\nx1			;10 (+2=+28)
+	bra.s	\nx1			;10 (+2=+28)
 \resetsmp2
 	move.l	1(a3),a3
-	bra	\nx2
+	bra.s	\nx2
 \resetsmp3
 	move.l	1(a4),a4
-	bra	\nx3
+	bra.s	\nx3
 \resetsmp4
 	move.l	1(a5),a5
-	bra	\nx4	
+	bra.s	\nx4	
 
 ;****************************************************************************
 jumptab
@@ -2278,12 +2280,12 @@ exit
 	move.w	#$700,d0		;disable interrupts
 	trap	#1
 
-
-	bclr	#0,($60000E)		;pull lines high
-	bclr	#1,($60000E)
+	andi.b	#$fc,($6000E)		;pull lp lines high
 	bclr	#6,($60000C)		;disable direct sound
 	
 	move.l	(stackRestore),a7
+	
+	bclr	#2,($600001)
 	
 	move.l	(a7)+,($000078)		;restore auto-int 6 vector
 	move.l	(a7)+,($000074)		;restore auto-int 5 vector
@@ -2326,7 +2328,7 @@ rdptn
 	beq.s	rdseq
 	
 	ror.b	#1,d0
-	bcs	\rdch3
+	bcs.s	\rdch3
 	moveq	#$0,d7
 	moveq	#$0,d3
 	move.w	(a1)+,d3
@@ -2334,7 +2336,7 @@ rdptn
 	
 \rdch3
 	ror.b	#1,d0
-	bcs	\rdch2
+	bcs.s	\rdch2
 	moveq	#$0,d6
 	moveq	#$0,d2
 	move.w	(a1)+,d2
@@ -2342,7 +2344,7 @@ rdptn
 	
 \rdch2
 	ror.b	#1,d0
-	bcs	\rdch1
+	bcs.s	\rdch1
 	moveq	#$0,d5
 	moveq	#$0,d1
 	move.w	(a1)+,d1
@@ -2350,7 +2352,7 @@ rdptn
 	
 \rdch1
 	ror.b	#1,d0
-	bcs	\rdnone
+	bcs.s	\rdnone
 	moveq	#$0,d4
 	moveq	#$0,d0
 	move.w	(a1)+,d0
@@ -2365,7 +2367,8 @@ rdptn
 	rte
 
 rdseq
-	movea.l	(seqpntr),a0
+	;movea.l	(seqpntr),a0
+	movea.l	seqpntr(PC),a0
 	movea.l	(a0)+,a1
 	move.l	a0,(seqpntr)
 	tst	(a0)
