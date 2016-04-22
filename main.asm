@@ -4,6 +4,7 @@
 	include "OS.h" 	;include file for _nostub programs, containing especially the ROM_CALLs
 	xdef _nostub 	;no kernel required
 	xdef _ti92plus 	;This program runs on a TI-92+.
+	xdef _ti89
 	
 	;samples must be aligned to 4 bytes inc. stop byte
 	;all volume levels multiplied by 4
@@ -16,12 +17,28 @@
 	;d4-d7	counters ch1-4
 	
 init
+	movem.l d0-d7/a0-a6,-(a7) 	;save all regs
+	
 	move.w	#$700,d0		;disable interrupts
-	trap	#1				
+	trap	#1
+	
+	lea.l	($600017),a1		;detect initial value of timer $600017
+	bset	#3,-2(a1)
+\ne_loop
+	tst.b	(a1)
+	bne.s	\ne_loop
+\eq_loop
+	move.b	(a1),d2
+	beq.s	\eq_loop
+	trap	#1			;enable interrupts and let AUTO_INT_5 fire
+	
+	move.w	d2,-(a7)
+	
+	move.w	#$700,d0		;disable interrupts
+	trap	#1
+					
 	move.w	d0,-(a7)		;preserve int mask
 	
-	movem.l d0-d7/a0-a6,-(a7) 	;save all regs
-
 	bset	#6,($60000C)		;enable direct sound
 
 	move.w	#$0,($600018)		;prepare keyhandler (check all keys)
@@ -30,8 +47,21 @@ init
 	
 	bclr	#2,($600001)		;disable memory protection
 	
+	move.l	$C8,d0			;test for HW3/4
+	swap	d0
+	tst.b	d0
+	bpl.s	\noUSB
+					;if HW > 2
+	move.l	($00006c),-(a7)		;preserve AutoInt 3 vector
+	lea	int3(PC),a1		;set AutoInt 3 vector
+	move.l	a1,($00006c)
+
+\noUSB	
+	move.l	($000070),-(a7)		;preserve AutoInt 4 vector	
 	move.l	($000074),-(a7)		;preserve AutoInt 5 vector
 	move.l	($000078),-(a7)		;preserve AutoInt 6 vector
+	
+	move.l	a7,(stackRestore)
 	
 	lea	int6(PC),a1		;set AutoInt 6 vector
 	move.l	a1,($000078)
@@ -39,6 +69,9 @@ init
 	lea	int5(PC),a1		;set AutoInt 5 vector
 	move.l	a1,($000074)
 	
+	lea	int4(PC),a1		;set AutoInt 4 vector
+	move.l	a1,($000070)
+
 	moveq	#$0,d0
 	lea	musicdata(PC),a0	;initialize pointers
 	move.w	(a0)+,d0		;read and set global speed
@@ -56,7 +89,7 @@ init
 	moveq	#$0,d6
 	moveq	#$0,d7
 
-	move.w	(a1)+,d0		;skip ctrl word
+	addq.l	#2,a1			;skip ctrl word
 	move.w	(a1)+,d3		;set initial basevals
 	movea.l	(a1)+,a5
 	move.w	(a1)+,d2
@@ -69,7 +102,7 @@ init
 	lea	jumptab(PC),a6		;initialize jump table pointer
 	
 	move.w	d0,-(a7)
-	move.w	#$400,d0		;enable auto-int 5-7
+	move.w	#$200,d0		;enable auto-int 3-7
 	trap	#1
 	move.w	(a7)+,d0
 	move.l	d0,a0
@@ -106,54 +139,33 @@ core0					;volume 0 - 20t
 	move.w	#$0,d7			;8	reset hi-word of counter
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
 	beq	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1
 	nop				;4	
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -211,54 +223,33 @@ core1					;volume 1 - 20+16t
 	move.w	#$0,d7			;8	reset hi-word of counter
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
 	beq	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -314,54 +305,33 @@ core2					;volume 2 - 20+32t
 	move.w	#$0,d7			;8	reset hi-word of counter
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
 	beq	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -417,54 +387,33 @@ core3					;volume 3 - 20+48t
 	move.b	#$0,d7			;8	reset hi-word of counter
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
 	beq	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -520,54 +469,33 @@ core4					;volume 4 - 20+64t
 	move.b	#$0,d7			;8	reset hi-word of counter
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
 	beq	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -623,54 +551,33 @@ core5					;volume 5 - 20+80t
 	move.b	#$0,d7			;8	reset hi-word of counter
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
 	beq	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -726,54 +633,33 @@ core6					;volume 6 - 20+96t
 	move.b	#$0,d7			;8	reset hi-word of counter
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
 	beq	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -829,54 +715,33 @@ core7					;volume 7 - 20+112t
 	move.b	#$0,d7			;8	reset hi-word of counter
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
 	beq	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -932,54 +797,33 @@ core8					;volume 8 - 20+128t
 	
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
 	beq	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -1032,8 +876,7 @@ core9					;volume 9 - 20+144t
 	move.b	#$0,d7			;8	reset hi-word of counter	
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	
@@ -1042,47 +885,27 @@ core9					;volume 9 - 20+144t
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8
 	beq.s	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -1141,49 +964,28 @@ core10					;volume 10 - 20+160t
 	beq.s	\resetsmp1		;8/10
 		
 	move.b	#$0,($60000E)		;20__180
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -1237,56 +1039,42 @@ core11					;volume 11 - 20+176t
 	move.b	#$0,d7			;8	reset hi-word of counter	
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8	
 	beq.s	\resetsmp1		;8/10
-	nop
-	nop
+	or.l	d0,d0			;8	timing
 	move.b	#$0,($60000E)		;20__196
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
-
 	
+	ori.b	#0,ccr			;20	timing
 	nop				;4
+; 	nop
+; 	nop
+; 	nop
+; 	nop
+; 	nop				;+28
+;
+; 	
+; 	nop				;4
 \nx1
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -1341,56 +1129,39 @@ core12					;volume 12 - 20+192t
 	move.b	#$0,d7			;8	reset hi-word of counter	
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8	
 	beq.s	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	move.b	#$0,($60000E)		;20__212
-	nop				;+28
-
-	
+	ori.b	#0,ccr			;20	timing
 	nop				;4
+; 	nop
+; 	nop
+; 	nop
+; 	nop
+; 	nop
+; 	nop
+	move.b	#$0,($60000E)		;20__212
+	or.l	d0,d0			;8	timing
 \nx1
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2	
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -1451,50 +1222,29 @@ core13					;volume 13 - 20+208t
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8	
 	beq.s	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
 	move.b	#$0,($60000E)		;20__228
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2	
-	nop				;4
-	nop				;4	timing
+	or.l	d0,d0			;8	timing
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -1548,55 +1298,40 @@ core14					;volume 14 - 20+224t
 	move.b	#$0,d7			;8	reset hi-word of counter	
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8	
 	beq.s	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop
+	or.l	d0,d0			;8	timing
 	move.b	#$0,($60000E)		;20__244
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	ori.b	#0,ccr			;20	timing
 	nop				;4
+; 	nop
+; 	nop
+; 	nop
+; 	nop
+; 	nop				;+28
+; 	nop				;4
 \nx2	
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -1651,55 +1386,40 @@ core15					;volume 15 - 20+240t
 	move.b	#$0,d7			;8	reset hi-word of counter	
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8	
 	beq.s	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop	
-	nop
-	nop
-	nop
-	nop
-	move.b	#$0,($60000E)		;20__260
-	nop				;+28
+	ori.b	#0,ccr			;20	timing
 	nop				;4
+; 	nop
+; 	nop	
+; 	nop
+; 	nop
+; 	nop
+; 	nop
+	move.b	#$0,($60000E)		;20__260
+	or.l	d0,d0			;8	timing
 \nx2	
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -1758,50 +1478,29 @@ core16					;volume 16 - 20+256t
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8	
 	beq.s	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop	
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
 	move.b	#$0,($60000E)		;20__276	
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -1855,55 +1554,40 @@ core17					;volume 17 - 20+272t
 	move.b	#$0,d7			;8	reset hi-word of counter	
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8	
 	beq.s	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop	
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
+	or.l	d0,d0			;8	timing
 	move.b	#$0,($60000E)		;20__292
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	ori.b	#0,ccr			;20	timing
 	nop				;4
+; 	nop
+; 	nop
+; 	nop
+; 	nop
+; 	nop				;+28
+; 	nop				;4
 \nx3
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -1958,55 +1642,40 @@ core18					;volume 18 - 20+288t
 	move.b	#$0,d7			;8	reset hi-word of counter	
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8	
 	beq.s	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop	
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	move.b	#$0,($60000E)		;20__308
-	nop				;+28
+	ori.b	#0,ccr			;20	timing
 	nop				;4
+; 	nop
+; 	nop
+; 	nop
+; 	nop
+; 	nop
+; 	nop
+	move.b	#$0,($60000E)		;20__308
+	or.l	d0,d0			;8	timing
 \nx3
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -2065,51 +1734,30 @@ core19					;volume 19 - 20+304t
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8	
 	beq.s	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop	
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3
 	nop				;4
 	cmp.b	(a5),d0			;8
 	beq	\resetsmp4		;8/10
 	move.b	#$0,($60000E)		;20__324
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx4
-	nop				;4	timing
-	nop				;4	
+	or.l	d0,d0			;8	timing	
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
 	add.b	(a3),d0			;12
@@ -2162,55 +1810,40 @@ core20					;volume 20 - 20+320t
 	move.b	#$0,d7			;8	reset hi-word of counter	
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8	
 	beq.s	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop	
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3
 	nop				;4
 	cmp.b	(a5),d0			;8	
 	beq	\resetsmp4		;8/10
-	nop
-	nop
+	or.l	d0,d0			;8	timing
 	move.b	#$0,($60000E)		;20__340
-	nop
-	nop
-	nop
-	nop
-	nop				;+28	
+	
+	ori.b	#0,ccr			;20	timing
+; 	nop
+; 	nop
+; 	nop
+; 	nop
+; 	nop				;+28	
 	moveq	#0,d0			;4
 \nx4
 	move.b	(a2),d0			;8
@@ -2265,53 +1898,39 @@ core21					;volume 21 - 20+336t
 	move.b	#$0,d7			;8	reset hi-word of counter	
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8	
 	beq.s	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop	
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3
 	nop				;4
 	cmp.b	(a5),d0			;8	
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
+	ori.b	#0,ccr			;20	timing
+	nop				;4
+; 	nop
+; 	nop
+; 	nop
+; 	nop
+; 	nop
+; 	nop
 	move.b	#$0,($60000E)		;20__356
 	nop				;+28	
 	moveq	#0,d0			;4
@@ -2368,54 +1987,33 @@ core22					;volume 21 - 20+352t
 	move.b	#$0,d7			;8	reset hi-word of counter	
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8	
 	beq.s	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop	
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3
 	nop				;4
 	cmp.b	(a5),d0			;8	
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop	
-	nop				;+28	
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8	
 \nx4
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -2469,54 +2067,33 @@ core23					;volume 23 - 20+8+368t
 	move.b	#$0,d7			;8	reset hi-word of counter	
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8	
 	beq.s	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop	
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3
 	nop				;4
 	cmp.b	(a5),d0			;8	
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop	
-	nop				;+28	
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8	
 \nx4
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -2570,54 +2147,33 @@ core24					;volume 24 - full loop
 	move.b	#$0,d7			;8	reset hi-word of counter	
 	swap	d7			;4
 	
-	nop				;4	timing
-	nop				;4
+	or.l	d0,d0			;8	timing
 	
 	move.l	d0,a0			;4
 	move.b	#$ff,d0			;8
 	cmp.b	(a2),d0			;8	
 	beq.s	\resetsmp1		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 
 \nx1	
 	nop				;4
 	cmp.b	(a3),d0			;8
 	beq	\resetsmp2		;8/10
-	nop
-	nop	
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx2
 	nop				;4
 	cmp.b	(a4),d0			;8
 	beq	\resetsmp3		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop				;+28
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8
 \nx3
 	nop				;4
 	cmp.b	(a5),d0			;8	
 	beq	\resetsmp4		;8/10
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop	
-	nop				;+28	
+	move.l	(a7),-(a7)		;20
+	addq.l	#4,a7			;8	
 \nx4
 	moveq	#0,d0			;4
 	move.b	(a2),d0			;8
@@ -2625,11 +2181,13 @@ core24					;volume 24 - full loop
 	add.b	(a4),d0			;12
 	add.b	(a5),d0			;12
 	
-	nop
-	nop
-	nop
-	nop
-	nop
+	ori.b	#0,ccr			;20	timing
+; 	nop
+; 	nop
+; 	nop
+; 	nop
+; 	nop
+	
 	jmp	0(a6,d0.w)		;14
 				
 \resetsmp1
@@ -2717,29 +2275,45 @@ seqpntr
 	dc.l	musicdata+6	
 ;****************************************************************************	
 exit
+	move.w	#$700,d0		;disable interrupts
+	trap	#1
+
+
 	bclr	#0,($60000E)		;pull lines high
 	bclr	#1,($60000E)
 	bclr	#6,($60000C)		;disable direct sound
 	
+	move.l	(stackRestore),a7
+	
 	move.l	(a7)+,($000078)		;restore auto-int 6 vector
 	move.l	(a7)+,($000074)		;restore auto-int 5 vector
+	move.l	(a7)+,($000070)		;restore auto-int 4 vector
+	
+	move.l	$C8,d0			;test for HW3/4
+	swap	d0
+	tst.b	d0
+	bpl.s	\noUSB
+	
+	move.l	(a7)+,($00006c)		;restore auto-int 3 vector
+	
+\noUSB
 	bset	#2,($600001)
 	
-	move.b	#$cc,($600017)		;restore timer speed
 	
-	movem.l (a7)+,d0-d7/a0-a6 	;restore all regs
 	
 	move.w	(a7)+,d0		;restore interrupts
+	
+	move.w	(a7)+,d2
+	move.b	d2,($600017)		;restore timer speed		
 	trap	#1
 	
-	;jsr	tios::OSLinkReset
 	ROM_CALL OSLinkReset
+	
+	movem.l (a7)+,d0-d7/a0-a6 	;restore all regs
 	rts
 
 ;****************************************************************************	
 int5
-	;andi.l	#$ffff,d0
-	;move.l	d0,a0			;preserve d0
 	move.w	(a7)+,d0
 	move.l	(a7)+,a6
 	lea	core0(PC),a6		;modify return point
@@ -2809,8 +2383,13 @@ int6
 	move.l	a0,-(a7)
 	move.w	d0,-(a7)
 	move.w	d0,($60001a)		;acknowledge auto-int 6
+int3
+int4
 	rte	
 	
 	even
+stackRestore
+	dc.l	0
+	
 musicdata
 	INCLUDE "music.asm"
