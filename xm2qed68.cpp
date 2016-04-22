@@ -83,11 +83,21 @@ int main(int argc, char *argv[]){
 	//locate the pattern headers and read pattern lengths
 	unsigned ptnoffsetlist[256];
 	unsigned ptnlengths[256];
-	unsigned headlength, packedlength;
+	unsigned headlength, packedlength, xmhead;
 	unsigned char pp;
 	int i;
 	
-	ptnoffsetlist[0] = 336;
+	//determine XM header length
+	INFILE.seekg(61, ios::beg);
+	INFILE.read((&cp), 1);
+	pp = static_cast<unsigned char>(cp);
+	xmhead = pp*256;
+	INFILE.seekg(60, ios::beg);
+	INFILE.read((&cp), 1);
+	pp = static_cast<unsigned char>(cp);
+	xmhead+=pp;
+	
+	ptnoffsetlist[0] = xmhead+60;
 	fileoffset = ptnoffsetlist[0];
 	
 	for (i=0; i < uniqueptns; i++) {
@@ -396,7 +406,7 @@ int main(int argc, char *argv[]){
 	//extract and convert samples
 	OUTFILE << "\n\teven\nsamples\nsmp0\n\tdc.b 0,$ff\n\tdc.l smp0\n\n";
 	
-	unsigned iheadersize,samplesize,csmpsize,j,k,loopstart,looplen,temph;
+	unsigned iheadersize,samplesize,csmpsize,j,loopstart,looplen,temph;
 	unsigned char minvol;
 	bool words, loop;
 	char sraw[0xffff];
@@ -545,12 +555,11 @@ int main(int argc, char *argv[]){
 			sraw[samplesize-1] = sraw[samplesize-2];
 		}
 		csmpsize = unsigned(samplesize/4);		//downsample and convert raw pcm to digiplay68 format (11khz, 3-bit volume)
-		for (j=0; j < csmpsize; j++) {
-			k = j*4;
-			//(((s+(s+1)+(s+2)+(s+3))/4)/32)*4
-			temph = reinterpret_cast<unsigned char&>(sraw[k]) + reinterpret_cast<unsigned char&>(sraw[k+1]) + reinterpret_cast<unsigned char&>(sraw[k+2]) + reinterpret_cast<unsigned char&>(sraw[k+3]);
-			temph = unsigned((temph/4)/32)*4;
-			scon[j] = (unsigned char)temph;
+
+		for (j=0; j < samplesize; j++) {
+			temph = reinterpret_cast<unsigned char&>(sraw[j]);
+			temph = unsigned(temph/32)*4;
+			scon[unsigned(j/4)] = (unsigned char)temph;
 		}
 		if ((csmpsize&1) == 0) csmpsize--;		//if converted sample size is even, make it odd
 
